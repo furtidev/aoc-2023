@@ -9,7 +9,7 @@ app "aoc-day2"
 # We have 12 red, 13 green and 14 blue cubes.
 
 main =
-    Stdout.line "\(input |> part1)"
+    Stdout.line "=== Day 2 === \n    P1- > \(Num.toStr (input |> part1))\n    P2 -> \(Num.toStr (input |> part2))"
 
 parseLine = \line ->
     # the plan is to map all items like this: [[ID, SUBSETS],...]. 
@@ -24,8 +24,9 @@ subsetParser = \subset ->
         splitElem = Str.split elem ", "
         List.concat state splitElem
 
+# Evaluate part 1 of the puzzle.
 # 'game' represents individual lines in <input.txt>
-evaluateGame = \state, game ->
+evaluateGame1 = \state, game ->
     id = Str.toU32 (List.get game 0 |> Result.withDefault "0") |> Result.withDefault 0
     subset = subsetParser (List.get game 1 |> Result.withDefault "")
 
@@ -60,9 +61,47 @@ evaluateGame = \state, game ->
     else
         state
 
+# Evaluate part 2 of the puzzle.
+# 'game' represents individual lines in <input.txt>
+evaluateGame2 = \state, game ->
+    subset = subsetParser (List.get game 1 |> Result.withDefault "")
+
+    recordMinimum = 
+        List.walk subset { red: 1, green: 1, blue: 1 } \recordState, item -> 
+            splitItem = Str.split item " "
+
+            countStr = List.get splitItem 0 |> Result.withDefault "0"
+            count = Str.toU32 countStr |> Result.withDefault 0
+            color = List.get splitItem 1 |> Result.withDefault ""
+
+            when color is
+                "red" ->
+                    if count > recordState.red then
+                        { recordState & red: count }
+                    else
+                        recordState
+                "green" ->
+                    if count > recordState.green then
+                        { recordState & green: count}
+                    else
+                        recordState
+                "blue" ->
+                    if count > recordState.blue then
+                        { recordState & blue: count}
+                    else
+                        recordState
+                _ -> recordState
+
+    state + (recordMinimum.red * recordMinimum.green * recordMinimum.blue)
+
 part1 = \data ->
     lines = Str.split data "\n"
     parsedLines = List.map lines parseLine
-    sum = List.walk parsedLines 0 evaluateGame
-    dbg sum
-    ""
+    sum = List.walk parsedLines 0 evaluateGame1
+    sum
+
+part2 = \data ->
+    lines = Str.split data "\n"
+    parsedLines = List.map lines parseLine
+    sum = List.walk parsedLines 0 evaluateGame2
+    sum
